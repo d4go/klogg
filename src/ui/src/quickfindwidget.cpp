@@ -53,9 +53,12 @@
 
 static constexpr int NotificationTimeout = 5000;
 
-const QString QFNotification::REACHED_EOF = "Reached end of file, no occurrence found.";
-const QString QFNotification::REACHED_BOF = "Reached beginning of file, no occurrence found.";
-const QString QFNotification::INTERRUPTED = "Search interrupted";
+const QString QFNotification::REACHED_EOF
+    = QT_TRANSLATE_NOOP( "QFNotification", "Reached end of file, no occurrence found." );
+const QString QFNotification::REACHED_BOF
+    = QT_TRANSLATE_NOOP( "QFNotification", "Reached beginning of file, no occurrence found." );
+const QString QFNotification::INTERRUPTED
+    = QT_TRANSLATE_NOOP( "QFNotification", "Search interrupted" );
 
 QuickFindWidget::QuickFindWidget( QWidget* parent )
     : QWidget( parent )
@@ -77,17 +80,17 @@ QuickFindWidget::QuickFindWidget( QWidget* parent )
     editQuickFind_->setMinimumSize( QSize( 150, 0 ) );
     layout->addWidget( editQuickFind_ );
 
-    ignoreCaseCheck_ = new QCheckBox( "Ignore &case" );
+    ignoreCaseCheck_ = new QCheckBox( tr( "Ignore &case" ) );
     ignoreCaseCheck_->setChecked( Configuration::get().qfIgnoreCase() );
     layout->addWidget( ignoreCaseCheck_ );
 
     previousButton_
-        = setupToolButton( QLatin1String( "Previous" ), QLatin1String( ":/images/arrowup.png" ) );
+        = setupToolButton( tr( "Previous" ), QLatin1String( ":/images/arrowup.png" ) );
     previousButton_->setShortcut( QKeySequence::FindPrevious );
     layout->addWidget( previousButton_ );
 
     nextButton_
-        = setupToolButton( QLatin1String( "Next" ), QLatin1String( ":/images/arrowdown.png" ) );
+        = setupToolButton( tr( "Next" ), QLatin1String( ":/images/arrowdown.png" ) );
     nextButton_->setShortcut( QKeySequence::FindNext );
     layout->addWidget( nextButton_ );
 

@@ -20,6 +20,7 @@
 #ifndef QFNOTIFICATIONS_H
 #define QFNOTIFICATIONS_H
 
+#include <QCoreApplication>
 #include <QFontMetrics>
 #include <QObject>
 #include <QWidget>
@@ -35,15 +36,15 @@ class QFNotification {
 
     QString message() const
     {
-        return message_;
+        return QCoreApplication::translate( "QFNotification", message_.toUtf8().constData() );
     }
 
     // Max width of the message (in pixels)
     static int maxWidth( const QWidget* widget )
     {
         QFontMetrics fm = widget->fontMetrics();
-        return qMax( fm.size( Qt::TextSingleLine, REACHED_BOF ).width(),
-                     fm.size( Qt::TextSingleLine, REACHED_EOF ).width() );
+        return qMax( fm.size( Qt::TextSingleLine, QFNotification( REACHED_BOF ).message() ).width(),
+                     fm.size( Qt::TextSingleLine, QFNotification( REACHED_EOF ).message() ).width() );
     }
 
   protected:

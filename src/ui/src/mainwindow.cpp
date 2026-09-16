@@ -428,21 +428,23 @@ int MainWindow::installLanguage( QString lang )
     QApplication::removeTranslator( &mTranslator );
     QApplication::removeTranslator( &mQtTranslator );
 
-    QString qtPath( ":/i18n/qt_" + lang + ".qm" );
-    QResource qtTranslations( qtPath );
-    if ( !mQtTranslator.load( qtTranslations.data(), (int)qtTranslations.size() ) ) {
-        LOG_ERROR << "load fail";
-        return -1;
-    }
-    if ( !QApplication::installTranslator( &mQtTranslator ) ) {
-        LOG_ERROR << "install fail";
-        return -1;
+    // English is the source language; Qt does not ship a qt_en catalog.
+    if ( lang == "en" ) {
+        return 0;
     }
 
-    QString appPath( ":/i18n/" + lang + ".qm" );
-    QResource appTranslations( appPath );
-    if ( !mTranslator.load( appTranslations.data(), (int)appTranslations.size() ) ) {
-        LOG_ERROR << "load fail";
+    // Qt catalogs are optional. Missing one must not suppress the app translation.
+    const QString qtPath( ":/i18n/qt_" + lang + ".qm" );
+    if ( mQtTranslator.load( qtPath ) ) {
+        QApplication::installTranslator( &mQtTranslator );
+    }
+    else {
+        LOG_WARNING << "Cannot load Qt translation " << qtPath;
+    }
+
+    const QString appPath( ":/i18n/" + lang + ".qm" );
+    if ( !mTranslator.load( appPath ) ) {
+        LOG_ERROR << "Cannot load application translation " << appPath;
         return -1;
     }
     if ( !QApplication::installTranslator( &mTranslator ) ) {

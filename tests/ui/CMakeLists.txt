@@ -3,6 +3,7 @@ set(UI_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/logdata_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/logfiltereddata_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/crawlerwidget_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/translation_test.cpp
 )
 
 if(NOT APPLE)
@@ -13,6 +14,16 @@ add_executable(klogg_itests ${UI_TEST_SOURCES} ${BACKWARD_ENABLE})
 
 target_link_libraries(klogg_itests klogg_ui klogg_utils Catch2 Qt${QT_VERSION_MAJOR}::Test test_utils)
 set_target_properties(klogg_itests PROPERTIES AUTOMOC ON)
+
+# Exercise the same embedded catalogs that are shipped in the application.
+get_target_property(KLOGG_APP_BINARY_DIR klogg BINARY_DIR)
+target_sources(klogg_itests PRIVATE
+    ${PROJECT_SOURCE_DIR}/src/app/klogg.qrc
+    ${KLOGG_APP_BINARY_DIR}/app_translations.qrc
+    ${KLOGG_APP_BINARY_DIR}/qt_translations.qrc
+)
+set_target_properties(klogg_itests PROPERTIES AUTORCC ON)
+add_dependencies(klogg_itests klogg)
 
 add_backward(klogg_itests)
 

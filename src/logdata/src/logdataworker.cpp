@@ -44,6 +44,7 @@
 #include <string_view>
 #include <thread>
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -734,7 +735,9 @@ void IndexOperation::doIndex( OffsetInFile initialPosition )
     if ( scopedAccessor.getMaxLength().get()
          == std::numeric_limits<LineLength::UnderlyingType>::max() ) {
         dispatchToMainThread( [] {
-            QMessageBox::critical( nullptr, "Klogg", "Can't index file: some lines are too long",
+            QMessageBox::critical( nullptr, "Klogg",
+                                   QCoreApplication::translate(
+                                       "LogDataWorker", "Can't index file: some lines are too long" ),
                                    QMessageBox::Close );
         } );
 

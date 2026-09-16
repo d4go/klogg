@@ -15,6 +15,7 @@ on:
 
 jobs:
   analyze:
+    if: github.ref_name != 'zh-cn' && github.head_ref != 'zh-cn'
     name: Analyze
     runs-on: ubuntu-24.04
 

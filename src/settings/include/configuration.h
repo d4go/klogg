@@ -42,6 +42,7 @@
 
 #include <QColor>
 #include <QFont>
+#include <QLocale>
 #include <QSettings>
 #include <qcolor.h>
 #include <string>
@@ -67,6 +68,9 @@ class Configuration final : public Persistable<Configuration> {
         return "Configuration";
     }
     Configuration();
+
+    // Used only when no language preference has been saved.
+    static QString defaultLanguageForLocale( const QLocale& locale );
 
     // Accesses the main font used for display
     QFont mainFont() const;

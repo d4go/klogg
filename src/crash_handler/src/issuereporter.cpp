@@ -18,6 +18,7 @@
  */
 
 #include <QDesktopServices>
+#include <QCoreApplication>
 #include <QMessageBox>
 #include <QUrl>
 #include <QUrlQuery>
@@ -59,9 +60,9 @@ static constexpr auto BugTemplate = "#### What did you do?\n\n\n"
                                     "#### What did you see instead?\n\n\n";
 
 static constexpr auto ExceptionAskUserAction
-    = "Ooops! Something unexpected happend. Create issue on Github?";
+    = QT_TRANSLATE_NOOP( "IssueReporter", "Ooops! Something unexpected happend. Create issue on Github?" );
 
-static constexpr auto AskUserAction = "Create issue on Github?";
+static constexpr auto AskUserAction = QT_TRANSLATE_NOOP( "IssueReporter", "Create issue on Github?" );
 
 void IssueReporter::askUserAndReportIssue( IssueTemplate issueTemplate, const QString& information )
 {
@@ -69,7 +70,8 @@ void IssueReporter::askUserAndReportIssue( IssueTemplate issueTemplate, const QS
         = issueTemplate == IssueTemplate::Exception ? ExceptionAskUserAction : AskUserAction;
 
     if ( QMessageBox::Yes
-         == QMessageBox::question( nullptr, "Klogg", askAction, QMessageBox::Yes,
+         == QMessageBox::question( nullptr, "Klogg",
+                                   QCoreApplication::translate( "IssueReporter", askAction ), QMessageBox::Yes,
                                    QMessageBox::No ) ) {
         IssueReporter::reportIssue( issueTemplate, information );
     }

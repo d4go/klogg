@@ -1,0 +1,140 @@
+name: Build zh_CN Windows x64
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [zh-cn]
+  pull_request:
+    branches: [zh-cn]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zh-cn-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-x64-qt6:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      # Keep the Qt / Boost versions used by the upstream Windows x64 job.
+      QT_VERSION: 6.7.3
+      BOOST_ROOT: ${{ github.workspace }}/build_root/boost_1_86_0
+      KLOGG_BUILD_ROOT: build_root
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        # CMake 4 removes compatibility needed by pinned upstream dependencies.
+        run: python -m pip install cmake==3.31.8 ninja==1.12.1
+
+      - name: Test translation checker
+        run: python scripts/test_check_translation.py
+
+      - name: Install upstream Qt 6 with LinguistTools and translations
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          modules: qt5compat
+          archives: qtbase qtimageformats qtsvg qttools qttranslations icu
+          cache: true
+          setup-python: false
+
+      - name: Cache Boost headers
+        id: boost-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BOOST_ROOT }}
+          key: boost-headers-1.86.0
+
+      - name: Download Boost headers
+        if: steps.boost-cache.outputs.cache-hit != 'true'
+        run: |
+          New-Item -ItemType Directory -Force build_root | Out-Null
+          Invoke-WebRequest 'https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2' -OutFile build_root/boost.tar.bz2
+          7z x build_root/boost.tar.bz2 -obuild_root -y -bd
+          if ($LASTEXITCODE -ne 0) { throw 'Boost bzip2 extraction failed' }
+          7z x build_root/boost.tar -obuild_root -y -bd
+          if ($LASTEXITCODE -ne 0) { throw 'Boost tar extraction failed' }
+          if (!(Test-Path "$env:BOOST_ROOT/boost/version.hpp")) { throw 'Boost headers missing' }
+
+      - name: Prepare MSVC x64 compiler
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Set upstream build version
+        # Same version scheme as .github/actions/klogg-version.
+        run: '"KLOGG_VERSION=24.11.0.$([int]$env:GITHUB_RUN_NUMBER + 717)" >> $env:GITHUB_ENV'
+
+      - name: Configure Windows x64 Qt6 Release
+        run: |
+          cmake -S . -B build_root -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR" `
+            "-DBOOST_ROOT=$env:BOOST_ROOT" `
+            "-DCPM_SOURCE_CACHE=$env:GITHUB_WORKSPACE/build_root/cpm_cache" `
+            -DKLOGG_GENERIC_CPU=ON `
+            -DKLOGG_USE_HYPERSCAN=ON `
+            -DKLOGG_USE_VECTORSCAN=OFF `
+            -DKLOGG_USE_SENTRY=ON `
+            -DKLOGG_OVERRIDE_MALLOC=OFF `
+            -DKLOGG_BUILD_TESTS=ON
+          if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed' }
+
+      - name: Synchronize and check Simplified Chinese translations
+        run: |
+          cmake --build build_root --target lupdate
+          if ($LASTEXITCODE -ne 0) { throw 'lupdate failed' }
+          python scripts/check_translation.py
+          if ($LASTEXITCODE -ne 0) { throw 'Translation completeness check failed' }
+          git diff --stat -- src/app/i18n
+
+      - name: Build Release binaries and embedded QM resources
+        run: cmake --build build_root --config Release --target ci_build
+
+      - name: Run upstream and localization tests
+        run: ctest --test-dir build_root -C Release --output-on-failure --timeout 600
+
+      - name: Package portable application
+        run: ./scripts/package_zh_cn_windows.ps1 -BuildDir build_root -QtDir $env:QT_ROOT_DIR
+
+      - name: Check packaged application without the build environment
+        run: ./scripts/test_zh_cn_windows_package.ps1 -PackageDir build_root/package
+
+      - name: Upload Windows x64 Qt6 Chinese application
+        uses: actions/upload-artifact@v4
+        with:
+          name: klogg-windows-x64-qt6-zh_CN
+          path: build_root/package/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload synchronized translations and validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: klogg-windows-x64-qt6-zh_CN-i18n
+          path: |
+            src/app/i18n/zh_CN.ts
+            build_root/src/app/zh_CN.qm
+            build_root/Testing/Temporary/LastTest.log
+            build_root/package-validation.txt
+          if-no-files-found: warn
+          retention-days: 30

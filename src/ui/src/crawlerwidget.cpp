@@ -295,7 +295,7 @@ void CrawlerWidget::focusSearchEdit()
 void CrawlerWidget::goToLine()
 {
     bool isLineSelected = true;
-    auto newLine = QInputDialog::getText( this, "Jump to line", "Line number" )
+    auto newLine = QInputDialog::getText( this, tr( "Jump to line" ), tr( "Line number" ) )
                        .toULongLong( &isLineSelected );
 
     if ( isLineSelected ) {
@@ -397,7 +397,7 @@ void CrawlerWidget::startNewSearch()
     }
 
     tabbedFilteredView_->setTabText( tabbedFilteredView_->currentIndex(),
-                                     "Find \"" + searchLineEdit_->currentText() + "\"" );
+                                     tr( "Find \"%1\"" ).arg( searchLineEdit_->currentText() ) );
 
     // Record the search line in the recent list
     // (reload the list first in case another glogg changed it)

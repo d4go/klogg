@@ -61,6 +61,19 @@ Configuration::Configuration()
     splitterSizes_ << 400 << 100;
 }
 
+QString Configuration::defaultLanguageForLocale( const QLocale& locale )
+{
+    if ( locale.language() == QLocale::Chinese ) {
+        if ( locale.script() == QLocale::SimplifiedHanScript ) {
+            return QStringLiteral( "zh_CN" );
+        }
+        if ( locale.script() == QLocale::TraditionalHanScript ) {
+            return QStringLiteral( "zh_TW" );
+        }
+    }
+    return QStringLiteral( "en" );
+}
+
 // Accessor functions
 QFont Configuration::mainFont() const
 {
@@ -103,7 +116,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         = settings.value( "mainFont.bold", DefaultConfiguration.useBoldFont_ )
               .toBool();
 
-    language_ = settings.value( "view.language", DefaultConfiguration.language_ ).toString();
+    language_ = settings.contains( "view.language" )
+                    ? settings.value( "view.language" ).toString()
+                    : defaultLanguageForLocale( QLocale::system() );
 
     enableQtHighDpi_
         = settings.value( "view.qtHiDpi", DefaultConfiguration.enableQtHighDpi_ ).toBool();

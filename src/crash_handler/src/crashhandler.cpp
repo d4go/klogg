@@ -104,10 +104,12 @@ void logSentry( sentry_level_t level, const char* message, va_list args, void* u
 QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const QString& reportPath )
 {
     auto message = std::make_unique<QLabel>();
-    message->setText( "During last run application has encountered an unexpected error." );
+    message->setText( QCoreApplication::translate(
+        "CrashHandler", "During last run application has encountered an unexpected error." ) );
 
     auto crashReportHeader = std::make_unique<QLabel>();
-    crashReportHeader->setText( "We collected the following crash report:" );
+    crashReportHeader->setText( QCoreApplication::translate(
+        "CrashHandler", "We collected the following crash report:" ) );
 
     auto report = std::make_unique<QPlainTextEdit>();
     report->setReadOnly( true );
@@ -115,19 +117,20 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     report->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     auto sendReportLabel = std::make_unique<QLabel>();
-    sendReportLabel->setText( "Application can send this report to sentry.io for developers to "
-                              "analyze and fix the issue" );
+    sendReportLabel->setText( QCoreApplication::translate(
+        "CrashHandler", "Application can send this report to sentry.io for developers to "
+                        "analyze and fix the issue" ) );
 
     auto privacyPolicy = std::make_unique<QLabel>();
-    privacyPolicy->setText(
-        "<a href=\"https://klogg.filimonov.dev/docs/privacy_policy\">Privacy policy</a>" );
+    privacyPolicy->setText( QCoreApplication::translate(
+        "CrashHandler", "<a href=\"https://klogg.filimonov.dev/docs/privacy_policy\">Privacy policy</a>" ) );
 
     privacyPolicy->setTextFormat( Qt::RichText );
     privacyPolicy->setTextInteractionFlags( Qt::TextBrowserInteraction );
     privacyPolicy->setOpenExternalLinks( true );
 
     auto exploreButton = std::make_unique<QPushButton>();
-    exploreButton->setText( "Open report directory" );
+    exploreButton->setText( QCoreApplication::translate( "CrashHandler", "Open report directory" ) );
     exploreButton->setFlat( true );
     QObject::connect( exploreButton.get(), &QPushButton::clicked,
                       [ &reportPath ] { showPathInFileExplorer( reportPath ); } );
@@ -138,8 +141,10 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     privacyLayout->addWidget( exploreButton.release() );
 
     auto buttonBox = std::make_unique<QDialogButtonBox>();
-    buttonBox->addButton( "Send report", QDialogButtonBox::AcceptRole );
-    buttonBox->addButton( "Discard report", QDialogButtonBox::RejectRole );
+    buttonBox->addButton( QCoreApplication::translate( "CrashHandler", "Send report" ),
+                         QDialogButtonBox::AcceptRole );
+    buttonBox->addButton( QCoreApplication::translate( "CrashHandler", "Discard report" ),
+                         QDialogButtonBox::RejectRole );
 
     auto confirmationDialog = std::make_unique<QDialog>();
     confirmationDialog->resize( 800, 600 );
@@ -296,7 +301,8 @@ CrashHandler::CrashHandler()
 
     if ( needWaitForUpload ) {
         QProgressDialog progressDialog;
-        progressDialog.setLabelText( "Uploading crash reports" );
+        progressDialog.setLabelText(
+            QCoreApplication::translate( "CrashHandler", "Uploading crash reports" ) );
         progressDialog.setRange( 0, 0 );
 
         QTimer::singleShot( 30 * 1000, &progressDialog, &QProgressDialog::cancel );

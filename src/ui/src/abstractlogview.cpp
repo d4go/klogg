@@ -1432,7 +1432,7 @@ void AbstractLogView::saveSelectedToFile()
 
 void AbstractLogView::saveLinesToFile( LineNumber begin, LineNumber end )
 {
-    auto filename = QFileDialog::getSaveFileName( this, "Save content" );
+    auto filename = QFileDialog::getSaveFileName( this, tr( "Save content" ) );
     if ( filename.isEmpty() ) {
         return;
     }

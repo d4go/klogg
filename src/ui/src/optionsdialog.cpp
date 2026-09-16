@@ -89,7 +89,7 @@ OptionsDialog::OptionsDialog( QWidget* parent )
 
     connect( restoreShortcutsDefaults, &QPushButton::clicked, this, [ this ]() {
         auto ret = QMessageBox::question(
-            this, "Restore Default Shortcuts", "Do you want to restore default shortcuts?",
+            this, tr( "Restore Default Shortcuts" ), tr( "Do you want to restore default shortcuts?" ),
             QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel );
         if ( ret == QMessageBox::Yes )
             buildShortcutsTable( true );
@@ -156,7 +156,7 @@ void OptionsDialog::setupStyles()
 void OptionsDialog::setupEncodings()
 {
     const auto availableEncodings = EncodingMenu::supportedEncodings();
-    encodingComboBox->addItem( "Auto", -1 );
+    encodingComboBox->addItem( tr( "Auto" ), -1 );
 
     std::map<QString, int> allMibs;
 
@@ -479,8 +479,7 @@ void OptionsDialog::checkShortcutsOnDuplicate() const
 
 int OptionsDialog::updateTranslate()
 {
-    auto mw = dynamic_cast<MainWindow*>( parent() );
-    return mw->installLanguage( languageComboBox->currentData().toString() );
+    return MainWindow::installLanguage( languageComboBox->currentData().toString() );
 }
 
 void OptionsDialog::updateConfigFromDialog()
@@ -571,7 +570,8 @@ void OptionsDialog::updateConfigFromDialog()
     config.setShortcuts( shortcuts );
 
     // update translate when accept or apply clicked
-    restartAppMessage |= config.language() != languageComboBox->currentData().toString();
+    const bool languageChanged = config.language() != languageComboBox->currentData().toString();
+    restartAppMessage |= languageChanged;
     updateTranslate();
     config.setLanguage( languageComboBox->currentData().toString() );
     retranslateUi( this );
@@ -587,10 +587,11 @@ void OptionsDialog::updateConfigFromDialog()
     recentFiles.save();
 
     if ( restartAppMessage ) {
+        const auto restartMessage = languageChanged
+            ? tr( "The language change will take full effect after restarting klogg." )
+            : tr( "Klogg needs to be restarted to apply some changes. " );
         QMessageBox::warning(
-            this, "klogg",
-            QApplication::translate( "OptionsDialog",
-                                     "Klogg needs to be restarted to apply some changes. " ) );
+            this, "klogg", restartMessage );
     }
 
     Q_EMIT optionsChanged();
@@ -638,10 +639,10 @@ void KeySequencePresenter::showEditor()
 {
     QDialog keyEditDialog;
 
-    auto label = new QLabel( "Press new key combination" );
+    auto label = new QLabel( tr( "Press new key combination" ) );
     auto editor = new QKeySequenceEdit( QKeySequence( keySequenceLabel_->text() ) );
     auto clearButton = new QToolButton();
-    clearButton->setText( "Clear" );
+    clearButton->setText( tr( "Clear" ) );
     auto dialogButtons = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
 
     auto layout = new QVBoxLayout();

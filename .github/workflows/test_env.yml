@@ -5,6 +5,7 @@ on:
 
 jobs:
   Windows:
+    if: github.ref_name != 'zh-cn' && github.head_ref != 'zh-cn'
     runs-on: windows-latest
     steps:
     - name: List redist
