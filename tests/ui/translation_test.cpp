@@ -5,12 +5,16 @@
 
 #include <catch2/catch.hpp>
 
+#include <memory>
+
 #include <QApplication>
+#include <QByteArray>
 #include <QCoreApplication>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
+#include <QFont>
 #include <QFontDatabase>
 #include <QLocale>
 #include <QPushButton>

@@ -27,6 +27,22 @@ jobs:
       BOOST_ROOT: ${{ github.workspace }}/build_root/boost_1_86_0
       KLOGG_BUILD_ROOT: build_root
       CMAKE_BUILD_PARALLEL_LEVEL: 2
+      # Cache dependency sources, object files and Ninja state, never deliverables
+      # or tests' portable settings. The checkout itself is not cached.
+      BUILD_CACHE_PATHS: |
+        build_root
+        !build_root/package
+        !build_root/package/**
+        !build_root/Testing
+        !build_root/Testing/**
+        !build_root/**/i18n-screenshots
+        !build_root/**/i18n-screenshots/**
+        !build_root/**/klogg.conf
+        !build_root/**/klogg_session.conf
+        !build_root/package-validation.txt
+        !build_root/boost_1_86_0
+        !build_root/boost_1_86_0/**
+        !build_root/boost.tar*
 
     steps:
       - uses: actions/checkout@v4
@@ -91,10 +107,37 @@ jobs:
         # Same version scheme as .github/actions/klogg-version.
         run: '"KLOGG_VERSION=24.11.0.$([int]$env:GITHUB_RUN_NUMBER + 717)" >> $env:GITHUB_ENV'
 
+      - name: Identify the incremental-build toolchain
+        id: build-toolchain
+        run: |
+          $compilerVersion = (Get-Item (Get-Command cl.exe).Source).VersionInfo.FileVersion -replace '[^0-9.]', ''
+          $sdkVersion = $env:WindowsSDKVersion.TrimEnd('\')
+          "prefix=klogg-build-v1-windows2022-x64-qt$env:QT_VERSION-msvc$compilerVersion-sdk$sdkVersion-cmake3.31.10-ninja1.11.1.4-${{ hashFiles('CMakeLists.txt', '3rdparty/CMakeLists.txt', 'cmake/**') }}" >> $env:GITHUB_OUTPUT
+
+      - name: Restore compatible dependency and object cache
+        id: build-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_CACHE_PATHS }}
+          key: ${{ steps.build-toolchain.outputs.prefix }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ steps.build-toolchain.outputs.prefix }}-
+
+      - name: Invalidate cached application objects against the current checkout
+        if: steps.build-cache.outputs.cache-matched-key != ''
+        run: |
+          $sourceTimestamp = [DateTime]::UtcNow
+          Get-ChildItem -LiteralPath src, tests -Recurse -File | ForEach-Object {
+            $_.LastWriteTimeUtc = $sourceTimestamp
+          }
+
       - name: Configure Windows x64 Qt6 Release
+        id: configure
+        # Always reconfigure against this checkout, including after a cache hit.
         run: |
           cmake -S . -B build_root -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
+            "-DBUILD_VERSION=$env:KLOGG_VERSION" `
             "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR" `
             "-DBOOST_ROOT=$env:BOOST_ROOT" `
             "-DCPM_SOURCE_CACHE=$env:GITHUB_WORKSPACE/build_root/cpm_cache" `
@@ -114,25 +157,63 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Translation completeness check failed' }
           git diff --stat -- src/app/i18n
 
-      - name: Build Release binaries and embedded QM resources
+      - name: Build current Release application and embedded QM resources
+        id: build-application
+        run: cmake --build build_root --config Release --target klogg klogg_portable klogg_grep
+
+      - name: Package portable application
+        id: package
+        run: |
+          ./scripts/package_zh_cn_windows.ps1 -BuildDir build_root -QtDir $env:QT_ROOT_DIR
+          @'
+          CANDIDATE ONLY: the full test suite has not completed for this package.
+          Use this artifact for diagnostics and manual visual testing only.
+          Commit: ${{ github.sha }}
+          Test results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          '@ | Set-Content -LiteralPath build_root/package/CANDIDATE-NOT-VALIDATED.txt -Encoding utf8
+
+      - name: Upload application candidate for diagnostics and visual testing
+        # This is deliberately separate from the verified delivery below. It is
+        # available even if compilation or execution of the tests later fails.
+        uses: actions/upload-artifact@v4
+        with:
+          name: klogg-windows-x64-qt6-zh_CN-candidate
+          path: build_root/package/*
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build all upstream and localization test targets
+        id: build-tests
         run: cmake --build build_root --config Release --target ci_build
 
       - name: Run upstream and localization tests
+        id: test
         run: ctest --test-dir build_root -C Release --output-on-failure --timeout 600
 
-      - name: Package portable application
-        run: ./scripts/package_zh_cn_windows.ps1 -BuildDir build_root -QtDir $env:QT_ROOT_DIR
-
       - name: Check packaged application without the build environment
+        id: test-package
         run: ./scripts/test_zh_cn_windows_package.ps1 -PackageDir build_root/package
 
+      - name: Mark the package as validated
+        run: |
+          Remove-Item -LiteralPath build_root/package/CANDIDATE-NOT-VALIDATED.txt
+          Copy-Item -LiteralPath build_root/package-validation.txt -Destination build_root/package/VALIDATION.txt
+
       - name: Upload Windows x64 Qt6 Chinese application
+        if: success() && steps.test.outcome == 'success' && steps.test-package.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: klogg-windows-x64-qt6-zh_CN
           path: build_root/package/*
           if-no-files-found: error
           retention-days: 30
+
+      - name: Save incremental build even when a test fails
+        if: always() && steps.configure.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.BUILD_CACHE_PATHS }}
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
 
       - name: Upload synchronized translations and validation logs
         if: always()

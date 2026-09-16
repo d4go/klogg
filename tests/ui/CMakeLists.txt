@@ -15,6 +15,19 @@ add_executable(klogg_itests ${UI_TEST_SOURCES} ${BACKWARD_ENABLE})
 target_link_libraries(klogg_itests klogg_ui klogg_utils Catch2 Qt${QT_VERSION_MAJOR}::Test test_utils)
 set_target_properties(klogg_itests PROPERTIES AUTOMOC ON)
 
+# OptionsDialog's public header includes the UI header generated for klogg_ui.
+get_target_property(KLOGG_UI_AUTOGEN_DIR klogg_ui AUTOGEN_BUILD_DIR)
+if(NOT KLOGG_UI_AUTOGEN_DIR)
+    get_target_property(KLOGG_UI_BINARY_DIR klogg_ui BINARY_DIR)
+    set(KLOGG_UI_AUTOGEN_DIR "${KLOGG_UI_BINARY_DIR}/klogg_ui_autogen")
+endif()
+get_property(KLOGG_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(KLOGG_MULTI_CONFIG)
+    target_include_directories(klogg_itests PRIVATE "${KLOGG_UI_AUTOGEN_DIR}/include_$<CONFIG>")
+else()
+    target_include_directories(klogg_itests PRIVATE "${KLOGG_UI_AUTOGEN_DIR}/include")
+endif()
+
 # Exercise the same embedded catalogs that are shipped in the application.
 get_target_property(KLOGG_APP_BINARY_DIR klogg BINARY_DIR)
 target_sources(klogg_itests PRIVATE
