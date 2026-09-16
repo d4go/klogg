@@ -5,15 +5,18 @@
 
 ## Windows 下载与运行
 
-1. 打开本仓库的 **Actions → Build zh_CN Windows x64**。
-2. 选择成功的构建，下载 **klogg-windows-x64-qt6-zh_CN**。
-3. 解压整个压缩包，运行 `klogg.exe`。不要单独移动 EXE。
-4. 若要把设置保存在解压目录，运行 `klogg_portable.exe`。
+1. 从 [Releases 下载 Windows x64 Qt6 简体中文版](https://github.com/d4go/klogg/releases/latest)。
+2. 下载 `klogg-windows-x64-qt6-zh_CN.zip`，解压整个压缩包。
+3. 运行 `klogg.exe`；若要把设置保存在解压目录，运行 `klogg_portable.exe`。不要单独移动 EXE。
+
+也可从 [Actions](https://github.com/d4go/klogg/actions/workflows/build-zh-cn-windows.yml) 的成功构建下载 `klogg-windows-x64-qt6-zh_CN`。带 `-candidate` 后缀的包仅供测试，不作为正式下载版。
 
 唯一交付配置为 Windows x64、Qt 6.7.3、Release。中文应用翻译和 Qt 标准控件翻译均内置于程序，无需手动复制 `.qm`。
 
 无历史配置时，简体中文系统默认使用简体中文，繁体中文系统使用现有繁体翻译，其他系统使用英文。
 已有 `view.language` 设置优先；可在 **文件 → 设置 → 视图 → 语言** 中切换 English / 中文（简体）。修改后重启 klogg，使全部界面生效。
+
+此中文维护版请从本仓库 Releases 获取更新；程序内的“检查更新”仍沿用上游更新来源。
 
 简体中文翻译已同步并完成 487 条，unfinished 和空翻译均为 0。内置上游帮助文档、命令行帮助、外部更新说明及部分第三方诊断保留英文，具体范围见 [汉化报告](LOCALIZATION_REPORT.zh-CN.md)。
 
