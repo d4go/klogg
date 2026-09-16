@@ -1868,6 +1868,17 @@
         <translation>向上选中多行</translation>
     </message>
     <message>
+        <location filename="../../ui/src/highlighterset.cpp" line="381"/>
+        <location filename="../../ui/src/highlighterset.cpp" line="404"/>
+        <source>Highlighters set</source>
+        <translation>高亮规则集</translation>
+    </message>
+    <message>
+        <location filename="../../ui/src/highlighterset.cpp" line="581"/>
+        <source>Color label %1</source>
+        <translation>颜色标签 %1</translation>
+    </message>
+    <message>
         <location filename="../../ui/src/highlighterset.cpp" line="595"/>
         <source>Color label 1</source>
         <translation>颜色标签 1</translation>

@@ -378,7 +378,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
         LOG_INFO << "HighlighterSet found old filters";
         settings.beginGroup( "FilterSet" );
         if ( settings.value( "version" ).toInt() <= FilterSet_VERSION ) {
-            name_ = settings.value( "name", "Highlighters set" ).toString();
+            name_ = settings.value( "name", QApplication::tr( "Highlighters set" ) ).toString();
             id_ = settings.value( "id", generateIdFromUuid() ).toString();
             int size = settings.beginReadArray( "filters" );
             for ( int i = 0; i < size; ++i ) {
@@ -401,7 +401,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
     else if ( settings.contains( "HighlighterSet/version" ) ) {
         settings.beginGroup( "HighlighterSet" );
         if ( settings.value( "version" ).toInt() <= HighlighterSet_VERSION ) {
-            name_ = settings.value( "name", "Highlighters set" ).toString();
+            name_ = settings.value( "name", QApplication::tr( "Highlighters set" ) ).toString();
             id_ = settings.value( "id", generateIdFromUuid() ).toString();
             int size = settings.beginReadArray( "highlighters" );
             for ( int i = 0; i < size; ++i ) {
@@ -578,7 +578,7 @@ void HighlighterSetCollection::retrieveFromStorage( QSettings& settings )
                 quickHighlighter.useInCycle = settings.value( "cycle", true ).toBool();
 
                 quickHighlighter.name
-                    = settings.value( "name", QString( "Color label %1" ).arg( i + 1 ) ).toString();
+                    = settings.value( "name", QApplication::tr( "Color label %1" ).arg( i + 1 ) ).toString();
 
                 quickHighlighters_.append( std::move( quickHighlighter ) );
             }

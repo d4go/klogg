@@ -13,11 +13,18 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 
 
 def main() -> None:
+    # Windows can use a legacy code page for redirected output. Test names and
+    # patterns include Chinese, so emit UTF-8 consistently in CI and local runs.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package-dir", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
@@ -36,6 +43,10 @@ def main() -> None:
         work = Path(temporary)
         runtime = work / "runtime"
         shutil.copytree(package_dir, runtime)
+        # Even the ordinary klogg.exe reads settings before processing -v. The
+        # existing portable-file rule keeps that smoke test out of the user's
+        # real profile as well as isolating klogg_portable.exe and klogg_grep.exe.
+        (runtime / "klogg.conf").write_text("", encoding="utf-8")
         environment = os.environ.copy()
         system_root = Path(environment["SystemRoot"])
         environment["PATH"] = os.pathsep.join(
@@ -123,7 +134,9 @@ def main() -> None:
             log.write((last_line + "\r\n").encode("ascii"))
         if large_log.stat().st_size <= 1024**3:
             raise AssertionError("Large-file fixture must exceed 1 GiB")
-        search(large_log, r"^KLOGG_CI ERROR 9001 large_file_tail_marker$", [last_line], timeout=180)
+        # The search engine receives CRLF lines without LF but with CR intact;
+        # the display/getLines path strips that CR from the returned text.
+        search(large_log, r"^KLOGG_CI ERROR 9001 large_file_tail_marker\r?$", [last_line], timeout=180)
         record("PASS: all runtime tests used a temporary package copy and isolated PATH")
 
 
