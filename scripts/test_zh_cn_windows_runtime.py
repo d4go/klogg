@@ -2,6 +2,8 @@
 
 The GUI version check only verifies startup dependencies. Actual read/search
 coverage uses klogg_grep, which shares the application's log and search engines.
+Codecs are explicitly selected: the console tool does not apply the detected
+encoding to the display codec, as the GUI's CrawlerWidget does.
 It does not replace visual testing of menus, dialogs, or language switching.
 """
 
@@ -48,7 +50,7 @@ def main() -> None:
         # real profile as well as isolating klogg_portable.exe and klogg_grep.exe.
         (runtime / "klogg.conf").write_text("", encoding="utf-8")
         environment = os.environ.copy()
-        system_root = Path(environment["SystemRoot"])
+        system_root = Path(environment["SYSTEMROOT"])
         environment["PATH"] = os.pathsep.join(
             map(str, (runtime, system_root / "System32", system_root))
         )
@@ -75,6 +77,13 @@ def main() -> None:
         for executable in ("klogg.exe", "klogg_portable.exe"):
             run(executable, ["-platform", "windows", "-v"], timeout=30)
             record(f"PASS: {executable} Windows platform / dependency startup smoke (version command)")
+
+        def select_encoding(mib: int) -> None:
+            # Use the existing configuration setting in the temporary copy. The
+            # GUI applies getDetectedEncoding(); klogg_grep lacks that UI step.
+            (runtime / "klogg.conf").write_text(
+                f"[General]\nversion=1\ndefaultView.encodingMib={mib}\n", encoding="utf-8"
+            )
 
         def search(log: Path, pattern: str, expected: list[str], timeout: int = 60) -> None:
             started = time.monotonic()
@@ -105,12 +114,14 @@ def main() -> None:
             for i in range(100)
         )
         text = "\n".join(lines) + "\n"
-        for name, encoding, bom in (
-            ("utf8", "utf-8", b""),
-            ("utf16le", "utf-16-le", codecs.BOM_UTF16_LE),
-            ("utf16be", "utf-16-be", codecs.BOM_UTF16_BE),
-            ("gb18030", "gb18030", b""),
+        for name, encoding, bom, mib in (
+            ("utf8", "utf-8", b"", 106),
+            ("utf16le", "utf-16-le", codecs.BOM_UTF16_LE, 1014),
+            ("utf16be", "utf-16-be", codecs.BOM_UTF16_BE, 1013),
+            ("gb18030", "gb18030", b"", 114),
         ):
+            select_encoding(mib)
+            record(f"INFO: {name} read/search uses explicit codec MIB {mib}; not an auto-detection test")
             log = work / f"{name}.log"
             log.write_bytes(bom + text.encode(encoding))
             search(log, r"^KLOGG_CI ERROR \d{4} ", [lines[1], lines[3]])
@@ -119,6 +130,7 @@ def main() -> None:
             search(log, "__KLOGG_CI_NO_MATCH__", [])
 
         emoji_line = "KLOGG_CI INFO 中文与 emoji 混合日志 😀🚀"
+        select_encoding(106)
         emoji_log = work / "utf8-emoji.log"
         emoji_log.write_text(emoji_line + "\n", encoding="utf-8")
         search(emoji_log, "emoji", [emoji_line])
