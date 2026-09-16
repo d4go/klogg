@@ -27,8 +27,10 @@ jobs:
       BOOST_ROOT: ${{ github.workspace }}/build_root/boost_1_86_0
       KLOGG_BUILD_ROOT: build_root
       CMAKE_BUILD_PARALLEL_LEVEL: 2
-      # Cache dependency sources, object files and Ninja state, never deliverables
-      # or tests' portable settings. The checkout itself is not cached.
+      # Cache the generated build tree for incremental compilation. Archiving a
+      # parent directory can retain excluded descendants, so packaging rebuilds
+      # its stage and packaged runtime tests use a temporary copy. The source
+      # checkout itself is not cached.
       BUILD_CACHE_PATHS: |
         build_root
         !build_root/package

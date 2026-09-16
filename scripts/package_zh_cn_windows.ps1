@@ -10,11 +10,25 @@ $repoDir = Split-Path $PSScriptRoot -Parent
 $buildRoot = (Resolve-Path -LiteralPath $BuildDir).Path
 $qtRoot = (Resolve-Path -LiteralPath $QtDir).Path
 $binaryDir = Join-Path $buildRoot 'output'
-$packageDir = Join-Path $buildRoot 'package'
+$packageDir = [System.IO.Path]::GetFullPath((Join-Path $buildRoot 'package'))
 
-# A fresh destination prevents stale DLLs from hiding deployment errors.
+# An older incremental cache may contain this generated staging directory.
+# Recreate only the fixed child of the resolved build root; never follow links.
 if (Test-Path -LiteralPath $packageDir) {
-    throw "Package directory already exists: $packageDir. Use a clean build directory."
+    $expectedParent = $buildRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+    if ([System.IO.Path]::GetDirectoryName($packageDir) -ne $expectedParent) {
+        throw "Refusing to clean a package directory outside the build root: $packageDir"
+    }
+    $packageEntry = Get-Item -LiteralPath $packageDir -Force
+    if (!$packageEntry.PSIsContainer -or
+        ($packageEntry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        throw "Refusing to clean a package path that is not an ordinary directory: $packageDir"
+    }
+    $links = @(Get-ChildItem -LiteralPath $packageDir -Recurse -Force -Attributes ReparsePoint)
+    if ($links.Count -ne 0) {
+        throw "Refusing to clean a package directory containing links: $packageDir"
+    }
+    Remove-Item -LiteralPath $packageDir -Recurse -Force
 }
 New-Item -ItemType Directory -Path $packageDir | Out-Null
 
