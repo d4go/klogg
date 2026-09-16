@@ -151,7 +151,16 @@ void OptionsDialog::setupRegexp()
 
 void OptionsDialog::setupStyles()
 {
-    styleComboBox->addItems( StyleManager::availableStyles() );
+    for ( const auto& style : StyleManager::availableStyles() ) {
+        auto displayName = style;
+        if ( style == StyleManager::DarkStyleKey ) {
+            displayName = tr( "Dark" );
+        }
+        else if ( style == StyleManager::DarkWindowsStyleKey ) {
+            displayName = tr( "Windows Dark" );
+        }
+        styleComboBox->addItem( displayName, style );
+    }
 }
 
 void OptionsDialog::setupEncodings()
@@ -316,13 +325,8 @@ void OptionsDialog::updateDialogFromConfig()
     }
     languageComboBox->setCurrentIndex( langIdx );
 
-    const auto style = config.style();
-    if ( !styleComboBox->findText( style, Qt::MatchExactly ) ) {
-        styleComboBox->setCurrentIndex( 0 );
-    }
-    else {
-        styleComboBox->setCurrentText( style );
-    }
+    const auto styleIndex = styleComboBox->findData( config.style() );
+    styleComboBox->setCurrentIndex( styleIndex >= 0 ? styleIndex : 0 );
 
     hideAnsiColorsCheckBox->setChecked( config.hideAnsiColorSequences() );
 
@@ -548,9 +552,10 @@ void OptionsDialog::updateConfigFromDialog()
 
     config.setVerifySslPeers( verifySslCheckBox->isChecked() );
 
-    restartAppMessage = config.style() != styleComboBox->currentText();
+    const auto selectedStyle = styleComboBox->currentData().toString();
+    restartAppMessage = config.style() != selectedStyle;
 
-    config.setStyle( styleComboBox->currentText() );
+    config.setStyle( selectedStyle );
     config.setHideAnsiColorSequences( hideAnsiColorsCheckBox->isChecked() );
 
     config.setDefaultEncodingMib( encodingComboBox->currentData().toInt() );

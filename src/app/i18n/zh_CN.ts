@@ -664,12 +664,12 @@
 <context>
     <name>KeySequencePresenter</name>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="646"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="651"/>
         <source>Press new key combination</source>
         <translation>请按下新的组合键</translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="649"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="654"/>
         <source>Clear</source>
         <translation>清除</translation>
     </message>
@@ -1321,32 +1321,42 @@
         <translation>Qt</translation>
     </message>
     <message>
+        <location filename="../../ui/src/optionsdialog.cpp" line="157"/>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
         <location filename="../../ui/src/optionsdialog.cpp" line="160"/>
+        <source>Windows Dark</source>
+        <translation>Windows 深色</translation>
+    </message>
+    <message>
+        <location filename="../../ui/src/optionsdialog.cpp" line="169"/>
         <source>Auto</source>
         <translation>自动检测编码</translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="595"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="600"/>
         <source>The language change will take full effect after restarting klogg.</source>
         <translation>语言设置将在重新启动 klogg 后完全生效。</translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="596"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="601"/>
         <source>Klogg needs to be restarted to apply some changes. </source>
         <translation>部分更改将在重新启动 klogg 后生效。 </translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="712"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="717"/>
         <source>Action</source>
         <translation>操作</translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="713"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="718"/>
         <source>Primary shortcut</source>
         <translation>主要快捷键</translation>
     </message>
     <message>
-        <location filename="../../ui/src/optionsdialog.cpp" line="715"/>
+        <location filename="../../ui/src/optionsdialog.cpp" line="720"/>
         <source>Secondary shortcut</source>
         <translation>备用快捷键</translation>
     </message>

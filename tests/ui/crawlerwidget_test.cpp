@@ -19,7 +19,9 @@
 
 #include <catch2/catch.hpp>
 
+#include <QByteArray>
 #include <QSignalSpy>
+#include <QScrollBar>
 #include <QTemporaryFile>
 #include <QTest>
 #include <QTimer>
@@ -106,6 +108,11 @@ struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
         return crawler->filteredView_->getSelectedText();
     }
 
+    QScrollBar* mainViewScrollBar()
+    {
+        return crawler->logMainView_->verticalScrollBar();
+    }
+
     void setSearchPattern( const QString& pattern )
     {
         QTest::keyClicks( crawler->searchLineEdit_, pattern );
@@ -151,6 +158,59 @@ struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
 };
 
 using CrawlerWidgetVisitor = CrawlerWidget::access_by<CrawlerWidgetPrivate>;
+
+TEST_CASE( "Crawler follows appended lines only while follow is enabled", "[ui][follow]" )
+{
+    QTemporaryFile file{ "crawler_follow_XXXXXX" };
+    REQUIRE( generateDataFiles( file ) );
+    REQUIRE( file.isOpen() );
+
+    Session session;
+    CrawlerWidgetVisitor visitor;
+    visitor.crawler.reset( static_cast<CrawlerWidget*>(
+        session.open( file.fileName(), []() { return new CrawlerWidget(); } ) ) );
+    visitor.crawler->resize( 800, 480 );
+    visitor.crawler->show();
+
+    auto* scrollBar = visitor.mainViewScrollBar();
+    REQUIRE( waitUiState( [ & ] {
+        return visitor.isLoadingFinished() && visitor.getLogNbLines().get() == SL_NB_LINES
+               && scrollBar->maximum() > 0;
+    } ) );
+
+    visitor.crawler->followSet( true );
+    REQUIRE( waitUiState( [ & ] {
+        return visitor.crawler->isFollowEnabled() && scrollBar->value() == scrollBar->maximum();
+    } ) );
+
+    const auto initialMaximum = scrollBar->maximum();
+    const auto appendedLines = QByteArray( "follow appended line\n" ).repeated( 25 );
+    REQUIRE( file.seek( file.size() ) );
+    REQUIRE( file.write( appendedLines ) == appendedLines.size() );
+    REQUIRE( file.flush() );
+
+    REQUIRE( waitUiState( [ & ] {
+        return visitor.getLogNbLines().get() == SL_NB_LINES + 25
+               && scrollBar->maximum() > initialMaximum
+               && scrollBar->value() == scrollBar->maximum();
+    } ) );
+    REQUIRE( visitor.crawler->isFollowEnabled() );
+
+    visitor.crawler->followSet( false );
+    REQUIRE_FALSE( visitor.crawler->isFollowEnabled() );
+    scrollBar->setValue( 0 );
+    const auto maximumBeforeSecondAppend = scrollBar->maximum();
+    const auto positionBeforeSecondAppend = scrollBar->value();
+
+    REQUIRE( file.write( appendedLines ) == appendedLines.size() );
+    REQUIRE( file.flush() );
+    REQUIRE( waitUiState( [ & ] {
+        return visitor.getLogNbLines().get() == SL_NB_LINES + 50
+               && scrollBar->maximum() > maximumBeforeSecondAppend;
+    } ) );
+    REQUIRE_FALSE( visitor.crawler->isFollowEnabled() );
+    REQUIRE( scrollBar->value() == positionBeforeSecondAppend );
+}
 
 SCENARIO( "Crawler widget search", "[ui]" )
 {

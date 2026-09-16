@@ -52,9 +52,17 @@ jobs:
           target: desktop
           arch: win64_msvc2019_64
           modules: qt5compat qtimageformats
-          archives: qtbase qtsvg qttools qttranslations
+          # lupdate links Qt6Qml even though klogg itself uses Qt Widgets.
+          archives: qtbase qtsvg qttools qttranslations qtdeclarative
           cache: true
           setup-python: false
+
+      - name: Verify Qt translation tools can start
+        run: |
+          & "$env:QT_ROOT_DIR/bin/lupdate.exe" -version
+          if ($LASTEXITCODE -ne 0) { throw "lupdate could not start: $LASTEXITCODE" }
+          & "$env:QT_ROOT_DIR/bin/lrelease.exe" -version
+          if ($LASTEXITCODE -ne 0) { throw "lrelease could not start: $LASTEXITCODE" }
 
       - name: Cache Boost headers
         id: boost-cache

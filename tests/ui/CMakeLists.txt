@@ -29,5 +29,12 @@ add_backward(klogg_itests)
 
 add_test(
     NAME klogg_itests
-    COMMAND klogg_itests -platform offscreen
+    COMMAND klogg_itests "~[i18n]" -platform offscreen
 )
+
+# Start localization in a fresh process: shortcut labels are cached on first use.
+add_test(
+    NAME klogg_i18n
+    COMMAND klogg_itests "[i18n]" -platform offscreen
+)
+set_tests_properties(klogg_itests klogg_i18n PROPERTIES RESOURCE_LOCK klogg_ui_settings)
