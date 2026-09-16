@@ -37,6 +37,7 @@
  */
 
 #include <QColorDialog>
+#include <QFile>
 #include <QKeySequenceEdit>
 #include <QMessageBox>
 #include <QToolButton>
@@ -176,9 +177,12 @@ void OptionsDialog::setupEncodings()
 
 void OptionsDialog::setupLanguageList()
 {
-    QResource resource( ":/i18n/Languages.xml" );
-    QByteArray bytes( reinterpret_cast<const char*>( resource.data() ), (int)resource.size() );
-    QXmlStreamReader xml( bytes );
+    QFile resource( ":/i18n/Languages.xml" );
+    if ( !resource.open( QIODevice::ReadOnly ) ) {
+        LOG_ERROR << "Cannot open language list";
+        return;
+    }
+    QXmlStreamReader xml( &resource );
 
     while ( !xml.atEnd() ) {
         QXmlStreamReader::TokenType token = xml.readNext();

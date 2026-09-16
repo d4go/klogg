@@ -1,3 +1,5 @@
+**简体中文 Windows x64 / Qt6 维护版：** [使用说明](README.zh-CN.md) · [汉化报告](LOCALIZATION_REPORT.zh-CN.md) · [下载构建产物](https://github.com/d4go/klogg/actions/workflows/build-zh-cn-windows.yml)
+
 ![media_small](https://user-images.githubusercontent.com/1620716/119145300-2d98b800-ba52-11eb-8d87-abe72cf65dd1.png)
 
 [![GitHub license](https://img.shields.io/github/license/variar/klogg.svg?style=flat)](https://github.com/variar/klogg/blob/master/COPYING)

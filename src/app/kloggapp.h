@@ -289,12 +289,12 @@ class KloggApp : public QApplication {
     {
         LOG_DEBUG << "newVersionNotification( " << new_version << " from " << url << " )";
 
-        QString message = QString( "<p> A new version of klogg (%1) is available for download </p>"
-                                   "<a href=\"%2\">%2</a>" )
+        QString message = tr( "<p> A new version of klogg (%1) is available for download </p>"
+                              "<a href=\"%2\">%2</a>" )
                               .arg( new_version, url );
 
         if ( !changes.empty() ) {
-            message.append( "<p>Important changes:</p><ul>" );
+            message.append( tr( "<p>Important changes:</p><ul>" ) );
             for ( const auto& change : changes ) {
                 message.append( QString( "<li>%1</li>" ).arg( change ) );
             }
